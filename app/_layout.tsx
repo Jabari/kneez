@@ -1,16 +1,15 @@
+import { useColorScheme } from '@/components/useColorScheme';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
+import { Tabs } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
+import { SafeAreaView } from 'react-native';
 import 'react-native-reanimated';
 
-import { useColorScheme } from '@/components/useColorScheme';
 
 export {
-  // Catch any errors thrown by the Layout component.
-  ErrorBoundary,
+  ErrorBoundary
 } from 'expo-router';
 
 export const unstable_settings = {
@@ -49,11 +48,20 @@ function RootLayoutNav() {
   const colorScheme = useColorScheme();
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
-      </Stack>
-    </ThemeProvider>
+    // <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+    //   <Stack>
+    //     <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+    //     <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
+    //   </Stack>
+    // </ThemeProvider>
+    <SafeAreaView style={{ flex: 1 }}>
+      <Tabs screenOptions={{ headerShown: false }}>
+      <Tabs.Screen name="index" options={{ title: 'Home' }} />
+      <Tabs.Screen name="assess" options={{ title: 'Assess' }} />
+      <Tabs.Screen name="moves" options={{ title: 'Moves' }} />
+      <Tabs.Screen name="routines" options={{ title: 'Routines' }} />
+      <Tabs.Screen name="profile" options={{ title: 'Profile' }} />
+      </Tabs>
+    </SafeAreaView>
   );
 }
