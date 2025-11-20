@@ -3,14 +3,16 @@
   "main": "expo-router/entry",
   "version": "1.0.0",
   "scripts": {
-    "start": "expo start",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
-    "web": "expo start --web"
+    "start": "NODE_OPTIONS=\"--require ./scripts/polyfill-readable-stream\" expo start",
+    "android": "NODE_OPTIONS=\"--require ./scripts/polyfill-readable-stream\" expo start --android",
+    "ios": "NODE_OPTIONS=\"--require ./scripts/polyfill-readable-stream\" expo start --ios",
+    "web": "NODE_OPTIONS=\"--require ./scripts/polyfill-readable-stream\" expo start --web",
+    "server": "ts-node src/server.ts"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
     "@react-navigation/native": "^7.1.8",
+    "cors": "^2.8.5",
     "expo": "~54.0.23",
     "expo-av": "~16.0.7",
     "expo-constants": "~18.0.10",
@@ -20,6 +22,8 @@
     "expo-splash-screen": "~31.0.10",
     "expo-status-bar": "~3.0.8",
     "expo-web-browser": "~15.0.9",
+    "express": "^4.19.2",
+    "openai": "^4.78.1",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-native": "0.81.5",
@@ -30,8 +34,11 @@
     "react-native-worklets": "0.5.1"
   },
   "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
     "@types/react": "~19.1.0",
     "react-test-renderer": "19.1.0",
+    "ts-node": "^10.9.2",
     "typescript": "~5.9.2"
   },
   "private": true
