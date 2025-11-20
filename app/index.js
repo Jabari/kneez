@@ -17,7 +17,7 @@ export default function Home() {
           fontWeight: '600',
         }}
       >
-        Welcome to Kneez 👋
+        Welcome to neez 👋
       </Text>
 
       <Text
