@@ -1,5 +1,6 @@
-import express from 'express';
+import './polyfills';
 import cors from 'cors';
+import express from 'express';
 import { OpenAI } from 'openai';
 import type { SymptomEntities, SymptomFieldName } from '../shared/types';
 
