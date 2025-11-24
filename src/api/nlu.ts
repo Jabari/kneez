@@ -1,12 +1,12 @@
 import Constants from 'expo-constants';
-import type { SymptomEntities } from '../../shared/types';
+import type { SymptomEntities } from '../shared/types';
 
 const manifestBaseUrl =
   (Constants.expoConfig?.extra as { nluBaseUrl?: string } | undefined)?.nluBaseUrl ||
   (Constants.manifestExtra as { nluBaseUrl?: string } | undefined)?.nluBaseUrl;
 
 const BASE_URL =
-  process.env.EXPO_PUBLIC_NLU_BASE_URL || manifestBaseUrl || 'http://localhost:3001';
+  process.env.EXPO_PUBLIC_NLU_BASE_URL || manifestBaseUrl || 'http://localhost:4000';
 
 export async function parseSymptomMessage(
   message: string,

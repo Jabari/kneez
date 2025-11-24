@@ -1,22 +1,22 @@
-import express from 'express';
+import express, { type Request, type Response } from 'express';
 import cors from 'cors';
 import { OpenAI } from 'openai';
-import type { SymptomEntities, SymptomFieldName } from '../shared/types';
-
-type ExpressLikeResponse = {
-  status: (code: number) => ExpressLikeResponse;
-  json: (body: unknown) => ExpressLikeResponse;
-};
+import type { SymptomEntities, SymptomFieldName } from './shared/types';
 
 type SymptomRequestBody = {
   message?: unknown;
   previousEntities?: Partial<SymptomEntities>;
 };
 
-const PORT = Number(process.env.PORT) || 3001;
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+const PORT = Number(process.env.PORT) || 4000;
 
-const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+if (!process.env.OPENAI_API_KEY) {
+  console.warn(
+    '⚠️  OPENAI_API_KEY is not set. Set it in your environment before running the server.'
+  );
+}
 
 const systemPrompt = `
 You are Kneez, an expert knee pain intake assistant.
@@ -89,58 +89,61 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.get('/health', (_req: unknown, res: ExpressLikeResponse) => {
+app.get('/health', (_req, res) => {
   res.json({ ok: true });
 });
 
-app.post('/nlu/symptom-entities', async (
-  req: { body?: SymptomRequestBody },
-  res: ExpressLikeResponse
-) => {
-  try {
-    if (!OPENAI_API_KEY) {
-      return res.status(500).json({ error: 'OpenAI API key not configured' });
-    }
+app.post(
+  '/nlu/symptom-entities',
+  async (
+    req: Request<unknown, unknown, SymptomRequestBody>,
+    res: Response
+  ) => {
+    try {
+      if (!process.env.OPENAI_API_KEY) {
+        return res.status(500).json({ error: 'OpenAI API key not configured' });
+      }
 
-    const { message, previousEntities } = (req.body ?? {}) as SymptomRequestBody;
+      const { message, previousEntities } = (req.body ?? {}) as SymptomRequestBody;
 
-    if (typeof message !== 'string' || message.trim().length === 0) {
-      return res.status(400).json({ error: 'message is required' });
-    }
+      if (typeof message !== 'string' || message.trim().length === 0) {
+        return res.status(400).json({ error: 'message is required' });
+      }
 
-    const userPrompt = `User message: """${message}"""`;
+      const userPrompt = `User message: """${message}"""`;
 
-    const response = await openai.responses.create({
-      model: 'gpt-5.1-mini',
-      input: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt },
-      ],
-      response_format: {
-        type: 'json_schema',
-        json_schema: {
-          name: 'symptom_entities',
-          schema: symptomSchema,
-          strict: true,
+      const response = await openai.responses.create({
+        model: 'gpt-5.1-mini',
+        input: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ],
+        response_format: {
+          type: 'json_schema',
+          json_schema: {
+            name: 'symptom_entities',
+            schema: symptomSchema,
+            strict: true,
+          },
         },
-      },
-    });
+      });
 
-    const raw = response.output?.[0]?.content?.[0]?.text;
+      const raw = response.output?.[0]?.content?.[0]?.text;
 
-    if (!raw) {
-      throw new Error('LLM response missing expected JSON payload');
+      if (!raw) {
+        throw new Error('LLM response missing expected JSON payload');
+      }
+
+      const parsed = JSON.parse(raw) as SymptomEntities;
+      const merged = mergeSymptomEntities(previousEntities, parsed);
+
+      res.json({ entities: merged });
+    } catch (error) {
+      console.error('Failed to parse symptom entities', error);
+      res.status(500).json({ error: 'Failed to parse symptom entities' });
     }
-
-    const parsed = JSON.parse(raw) as SymptomEntities;
-    const merged = mergeSymptomEntities(previousEntities, parsed);
-
-    res.json({ entities: merged });
-  } catch (error) {
-    console.error('Failed to parse symptom entities', error);
-    res.status(500).json({ error: 'Failed to parse symptom entities' });
   }
-});
+);
 
 app.listen(PORT, () => {
   console.log(`NLU server listening on port ${PORT}`);

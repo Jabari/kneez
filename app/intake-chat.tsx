@@ -10,7 +10,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import type { SymptomEntities } from '../shared/types';
+import type { SymptomEntities } from '../src/shared/types';
 import { parseSymptomMessage } from '../src/api/nlu';
 import { getNextIntakeQuestion } from '../src/logic/getNextIntakeQuestion';
 
