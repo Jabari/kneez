@@ -1,5 +1,5 @@
 import Constants from 'expo-constants';
-import type { SymptomEntities } from '../../shared/types';
+import type { SymptomEntities } from '../shared/types';
 
 const manifestBaseUrl =
   (Constants.expoConfig?.extra as { nluBaseUrl?: string } | undefined)?.nluBaseUrl ||

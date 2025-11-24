@@ -1,4 +1,4 @@
-import type { SymptomEntities } from '../../shared/types';
+import type { SymptomEntities } from '../shared/types';
 
 export function getNextIntakeQuestion(entities: SymptomEntities): string | null {
   const missing = entities.missing_fields;
