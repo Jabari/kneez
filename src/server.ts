@@ -1,6 +1,7 @@
-import express, { type Request, type Response } from 'express';
 import cors from 'cors';
-import { OpenAI } from 'openai';
+import express from 'express';
+import OpenAI from 'openai';
+
 import type { SymptomEntities, SymptomFieldName } from './shared/types';
 
 type SymptomRequestBody = {
@@ -96,8 +97,8 @@ app.get('/health', (_req, res) => {
 app.post(
   '/nlu/symptom-entities',
   async (
-    req: Request<unknown, unknown, SymptomRequestBody>,
-    res: Response
+    req: express.Request<unknown, unknown, SymptomRequestBody>,
+    res: express.Response
   ) => {
     try {
       if (!process.env.OPENAI_API_KEY) {
@@ -118,17 +119,11 @@ app.post(
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt },
         ],
-        response_format: {
-          type: 'json_schema',
-          json_schema: {
-            name: 'symptom_entities',
-            schema: symptomSchema,
-            strict: true,
-          },
-        },
+        s
       });
 
-      const raw = response.output?.[0]?.content?.[0]?.text;
+      const firstOutput = response.output?.[0] as any;
+      const raw = firstOutput?.content?.[0]?.text?.value ?? '';
 
       if (!raw) {
         throw new Error('LLM response missing expected JSON payload');
