@@ -1,4 +1,5 @@
 import cors from 'cors';
+import 'dotenv/config';
 import express from 'express';
 import OpenAI from 'openai';
 
@@ -119,7 +120,6 @@ app.post(
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt },
         ],
-        s
       });
 
       const firstOutput = response.output?.[0] as any;

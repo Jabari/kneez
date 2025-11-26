@@ -1,7 +1,6 @@
 // app/(public)/welcome.js
 import { ResizeMode, Video } from 'expo-video';
 import { useRouter } from 'expo-router';
-import { default as React } from 'react';
 import { Platform, Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
 
 
