@@ -1,5 +1,5 @@
 // app/(public)/welcome.js
-import { Video } from 'expo-av';
+import { ResizeMode, Video } from 'expo-video';
 import { useRouter } from 'expo-router';
 import { default as React } from 'react';
 import { Platform, Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
@@ -14,7 +14,7 @@ export default function Welcome() {
       <Video
         source={require('../../assets/videos/hiking.mp4')}
         style={styles.hero}
-        resizeMode="cover"
+        resizeMode={ResizeMode.COVER}
         shouldPlay
         isLooping
         isMuted
