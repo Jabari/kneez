@@ -1,25 +1,35 @@
 // app/(public)/welcome.js
-import { ResizeMode, Video } from 'expo-video';
 import { useRouter } from 'expo-router';
+import { useVideoPlayer, VideoView } from 'expo-video';
+import { useEffect } from 'react';
 import { Platform, Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
-
 
 export default function Welcome() {
   const router = useRouter();
 
+  // Create the player and configure it once
+  const player = useVideoPlayer(require('../../assets/videos/hiking.mp4'), (player) => {
+    player.loop = true;   // isLooping
+    player.muted = true;  // isMuted
+    player.play();        // shouldPlay
+  });
+
+  useEffect(() => {
+    if (!player) return;
+    player.loop = true;   // isLooping
+    player.muted = true;  // isMuted
+    player.play();        // shouldPlay
+  },[player])
+
   return (
     <SafeAreaView style={styles.safe}>
       {/* Background video */}
-      <Video
-        source={require('../../assets/videos/hiking.mp4')}
+      <VideoView
         style={styles.hero}
-        resizeMode={ResizeMode.COVER}
-        shouldPlay
-        isLooping
-        isMuted
-        useNativeControls={false}
+        player={player}
+        contentFit="cover"           // same as before
+        nativeControls={false}       // useNativeControls={false}
         accessibilityLabel="Nature scene with a person hiking"
-        onError={(e) => console.warn('Video error:', e)}
       />
 
       {/* Overlay content */}

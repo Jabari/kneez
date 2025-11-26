@@ -95,50 +95,79 @@ app.get('/health', (_req, res) => {
   res.json({ ok: true });
 });
 
-app.post(
-  '/nlu/symptom-entities',
-  async (
-    req: express.Request<unknown, unknown, SymptomRequestBody>,
-    res: express.Response
-  ) => {
-    try {
-      if (!process.env.OPENAI_API_KEY) {
-        return res.status(500).json({ error: 'OpenAI API key not configured' });
-      }
+app.post('/nlu/symptom-entities', async (req, res) => {
+  try {
+    const { message, previousEntities } = req.body as {
+      message: string;
+      previousEntities?: Partial<SymptomEntities>;
+    };
 
-      const { message, previousEntities } = (req.body ?? {}) as SymptomRequestBody;
-
-      if (typeof message !== 'string' || message.trim().length === 0) {
-        return res.status(400).json({ error: 'message is required' });
-      }
-
-      const userPrompt = `User message: """${message}"""`;
-
-      const response = await openai.responses.create({
-        model: 'gpt-5.1-mini',
-        input: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt },
-        ],
-      });
-
-      const firstOutput = response.output?.[0] as any;
-      const raw = firstOutput?.content?.[0]?.text?.value ?? '';
-
-      if (!raw) {
-        throw new Error('LLM response missing expected JSON payload');
-      }
-
-      const parsed = JSON.parse(raw) as SymptomEntities;
-      const merged = mergeSymptomEntities(previousEntities, parsed);
-
-      res.json({ entities: merged });
-    } catch (error) {
-      console.error('Failed to parse symptom entities', error);
-      res.status(500).json({ error: 'Failed to parse symptom entities' });
+    if (!message || typeof message !== 'string') {
+      return res.status(400).json({ error: 'message is required' });
     }
+
+    const systemPrompt = `
+You are Kneez, an expert knee pain intake assistant.
+
+Your job:
+- Read the user's message describing knee symptoms.
+- Extract these fields:
+  - symptom_side: "left", "right", "both", or "unsure" if not clearly stated.
+  - symptom_description: array of short phrases describing symptoms
+    (e.g. ["sharp pain", "stiff", "numb", "tingling", "popping"]).
+  - symptom_location: concise description of where on/around the knee
+    (e.g. "behind right kneecap", "outside of left knee", "below left kneecap").
+  - trigger_activity: array of activities that trigger or worsen pain
+    (e.g. ["running", "deep squats", "walking upstairs"]).
+- If you cannot confidently determine a field, leave it generic and mark that field name in missing_fields.
+- missing_fields: list every field where information is missing, ambiguous, or conflicting.
+
+Do NOT make up very specific details that are not implied by the user.
+If the user does not mention side, use "unsure" and mark "symptom_side" as missing.
+Always return valid JSON strictly matching the schema.
+`;
+
+    const userPrompt = `User message: """${message}"""`;
+
+    const response = await openai.responses.create({
+      model: 'gpt-5-mini-2025-08-07', // or gpt-4o-mini etc, whatever you're using
+      input: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt },
+      ],
+      // 👇 THIS is the correct way to do JSON schema with Responses API
+      text: {
+        format: {
+          type: 'json_schema',
+          name: 'symptom_entities',
+          strict: true,
+          schema: symptomSchema,
+        },
+      },
+    });
+
+    // With text.format set, output_text will be a JSON string matching our schema
+    const raw = response.output_text;
+
+    let parsed: SymptomEntities;
+    try {
+      parsed = JSON.parse(raw) as SymptomEntities;
+    } catch (e) {
+      console.error('Failed to parse symptom entities JSON. Raw output:', raw);
+      return res.status(500).json({ error: 'Failed to parse symptom entities' });
+    }
+
+    const merged = mergeSymptomEntities(previousEntities, parsed);
+    return res.json({ entities: merged });
+  } catch (err: any) {
+    console.error('NLU error', err);
+    return res.status(500).json({
+      error: 'NLU failed',
+      details: err?.message ?? 'unknown error',
+    });
   }
-);
+});
+
 
 app.listen(PORT, () => {
   console.log(`NLU server listening on port ${PORT}`);
