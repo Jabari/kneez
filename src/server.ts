@@ -3,7 +3,11 @@ import 'dotenv/config';
 import express from 'express';
 import OpenAI from 'openai';
 
-import type { SymptomEntities, SymptomFieldName } from './shared/types';
+import type {
+  IntentClassification,
+  SymptomEntities,
+  SymptomFieldName,
+} from './shared/types';
 
 type SymptomRequestBody = {
   message?: unknown;
@@ -87,12 +91,128 @@ const symptomSchema = {
   additionalProperties: false,
 };
 
+const intentSchema = {
+  type: 'object',
+  properties: {
+    intent: {
+      type: 'string',
+      enum: ['red_flag', 'acute_relief', 'rehab_request', 'general_education', 'out_of_scope'],
+    },
+  },
+  required: ['intent'],
+  additionalProperties: false,
+};
+
+const intentRouterPrompt = `System prompt (for the router LLM)
+You are a routing classifier for the Kneez app. Your ONLY job is to decide the user’s intent from their first message and output a single JSON object. Do not answer the question or give advice. Return only valid JSON with a single property, intent, whose value is one of the allowed strings below. No extra text.
+
+Decision rules (apply in this order; the first match wins):
+
+red_flag – Any red-flag symptoms (e.g., recent major trauma, audible pop with immediate swelling and inability to bear weight, severe deformity, fever with hot/red joint, suspected infection, foot/calf swelling with shortness of breath, numbness with loss of bladder/bowel control).
+
+acute_relief – The user reports knee symptoms during a specific activity and seems to want immediate relief (e.g., “my left knee hurts when I squat/go upstairs/run”).
+
+rehab_request – The user asks for stretching, mobility, or strengthening plans, long-term fixes, rehab programs, or prevention (not immediate symptom relief).
+
+general_education – Curiosity/learning questions about knee anatomy, knee symptom causes, diagnoses, imaging, timelines, what a knee structure is/does, anything knee-related, without asking for a symptom fix.
+
+out_of_scope – Not about knees, or unrelated.
+
+Allowed intent string values:
+
+"red_flag"
+
+"acute_relief"
+
+"rehab_request"
+
+"general_education"
+
+"out_of_scope"
+
+Output format: {"intent":"<one of the above>"}
+No other keys. No explanations. Always valid JSON.
+
+User prompt template (what you send with the user’s message)
+Classify the user’s intent for routing. Remember: return only the JSON object with intent.
+
+User message:
+{USER_MESSAGE_GOES_HERE}
+Quick examples (for your tests)
+“the back of my right knee hurts when I go downstairs” → {"intent":"acute_relief"}
+
+“what is the muscle above the knee called?” → {"intent":"general_education"}
+
+“what stretches can I do to fix runner’s knee long term?” → {"intent":"long_term_solution"}
+
+“I heard a pop, can’t put weight on it, knee looks crooked” → {"intent":"emergency_red_flag"}
+
+“my shoulder hurts when benching” → {"intent":"out_of_scope"}
+
+Tips to make this work reliably
+Precedence matters: run the red-flag check first so emergencies never get misrouted.
+
+Keep it JSON-only: in your calling code, reject and re-ask if the response isn’t valid JSON with only intent.
+
+Guardrails: temperature ≤ 0.2; top_p ≤ 0.2 to keep outputs deterministic.
+
+Telemetry: log the raw user message + classified intent to spot drift and refine prompts later.`;
+
 const app = express();
 app.use(cors());
 app.use(express.json());
 
 app.get('/health', (_req, res) => {
   res.json({ ok: true });
+});
+
+app.post('/nlu/intent', async (req, res) => {
+  try {
+    const { message } = req.body as { message?: unknown };
+
+    if (!message || typeof message !== 'string') {
+      return res.status(400).json({ error: 'message is required' });
+    }
+
+    const userPrompt = `Classify the user’s intent for routing. Remember: return only the JSON object with intent.\n\nUser message:\n${message}`;
+
+    const response = await openai.responses.create({
+      model: 'gpt-4o-mini',
+      temperature: 0.2,
+      top_p: 0.2,
+      input: [
+        { role: 'system', content: intentRouterPrompt },
+        { role: 'user', content: userPrompt },
+      ],
+      text: {
+        format: {
+          type: 'json_schema',
+          name: 'intent_router',
+          strict: true,
+          schema: intentSchema,
+        },
+      },
+    });
+
+    const raw = response.output_text;
+    console.log('[intent-router]', { message, raw });
+
+    let parsed: IntentClassification;
+    try {
+      parsed = JSON.parse(raw) as IntentClassification;
+    } catch (e) {
+      console.error('Failed to parse intent JSON. Raw output:', raw);
+      return res.status(500).json({ error: 'Failed to parse intent' });
+    }
+
+    return res.json(parsed);
+  } catch (err: any) {
+    console.error('Intent router error', err);
+    return res.status(500).json({
+      error: 'Intent router failed',
+      details: err?.message ?? 'unknown error',
+    });
+  }
 });
 
 app.post('/nlu/symptom-entities', async (req, res) => {
