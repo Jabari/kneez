@@ -10,7 +10,8 @@ import {
   View,
 } from 'react-native';
 
-import type { SymptomEntities } from '../../shared/types';
+import type { SymptomEntities, UserIntent } from '../shared/types';
+import { classifyIntent } from '../api/router';
 import { parseSymptomMessage } from '../api/nlu';
 import { EMPTY_ENTITIES } from '../logic/emptyEntities';
 import { getNextIntakeQuestion } from '../logic/getNextIntakeQuestion';
@@ -34,6 +35,7 @@ export default function IntakeChatScreen() {
   const [entities, setEntities] = useState<SymptomEntities>(EMPTY_ENTITIES);
   const [isLoading, setIsLoading] = useState(false);
   const [hasCompletedIntake, setHasCompletedIntake] = useState(false);
+  const [intent, setIntent] = useState<UserIntent | null>(null);
 
   const addMessage = (msg: ChatMessage) => {
     setMessages(prev => [...prev, msg]);
@@ -53,6 +55,33 @@ export default function IntakeChatScreen() {
 
     setIsLoading(true);
     try {
+      let resolvedIntent = intent;
+
+      if (!resolvedIntent) {
+        const classification = await classifyIntent(trimmed);
+        resolvedIntent = classification.intent;
+        setIntent(resolvedIntent);
+        console.log('Intent classification', classification.intent);
+      }
+
+      if (resolvedIntent === 'out_of_scope') {
+        addMessage({
+          id: `b-${Date.now()}`,
+          from: 'bot',
+          text: "I'm focused on knee concerns. Can you share what's going on with your knees?",
+        });
+        return;
+      }
+
+      if (resolvedIntent === 'red_flag') {
+        addMessage({
+          id: `b-${Date.now()}`,
+          from: 'bot',
+          text: 'Your description could be a red flag. Please seek in-person medical care or urgent evaluation to stay safe.',
+        });
+        return;
+      }
+
       const newEntities = await parseSymptomMessage(trimmed, entities);
       setEntities(newEntities);
 

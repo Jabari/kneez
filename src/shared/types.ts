@@ -1,5 +1,16 @@
 export type SymptomSide = 'left' | 'right' | 'both' | 'unsure';
 
+export type UserIntent =
+  | 'red_flag'
+  | 'acute_relief'
+  | 'rehab_request'
+  | 'general_education'
+  | 'out_of_scope';
+
+export type IntentClassification = {
+  intent: UserIntent;
+};
+
 export type SymptomFieldName =
   | 'symptom_side'
   | 'symptom_description'
