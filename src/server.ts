@@ -33,7 +33,7 @@ if (!GEMINI_API_KEY) {
   );
 }
 
-const GEMINI_MODEL = 'gemini-3.0-flash';
+const GEMINI_MODEL = 'gemini-3-pro-preview';
 const GEMINI_ENDPOINT =
   'https://generativelanguage.googleapis.com/v1beta/models/' +
   `${GEMINI_MODEL}:generateContent?key=`;
@@ -325,9 +325,10 @@ app.post('/chat/education', async (req, res) => {
       body: JSON.stringify({
         system_instruction: { parts: [{ text: educationSystemPrompt }] },
         contents: [...mapHistoryToGemini(history ?? []), buildUserContent(message)],
+        //thinkingBudget: -1,
         generationConfig: {
           temperature: 0.35,
-          maxOutputTokens: 400,
+          maxOutputTokens: 800,
         },
         safetySettings: [
           { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_LOW_AND_ABOVE' },
