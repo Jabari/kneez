@@ -1,7 +1,7 @@
 import { AuthProvider, useAuth } from '@/src/contexts/AuthContext';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useFonts } from 'expo-font';
-import { Stack, useRouter } from 'expo-router';
+import { Stack, useRootNavigationState, useRouter } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import { SafeAreaView } from 'react-native';
@@ -46,15 +46,22 @@ export default function RootLayout() {
 
 function RootLayoutNav() {
   const router = useRouter();
+  const rootNavigationState = useRootNavigationState();
   const { isAuthenticated } = useAuth();
 
   useEffect(() => {
+    if (!rootNavigationState?.key) return;
+
     if (isAuthenticated) {
       router.replace('/(tabs)/index');
     } else {
       router.replace('/welcome');
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, router, rootNavigationState?.key]);
+
+  if (!rootNavigationState?.key) {
+    return null;
+  }
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
