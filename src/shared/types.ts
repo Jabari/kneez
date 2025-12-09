@@ -28,3 +28,8 @@ export type SymptomEntities = {
   // Field names that the system still doesn’t have confident info for
   missing_fields: SymptomFieldName[];
 };
+
+export type ChatTurn = {
+  from: 'user' | 'bot';
+  text: string;
+};

@@ -5,6 +5,7 @@ import OpenAI from 'openai';
 
 import type {
   IntentClassification,
+  ChatTurn,
   SymptomEntities,
   SymptomFieldName,
 } from './shared/types';
@@ -23,6 +24,21 @@ if (!process.env.OPENAI_API_KEY) {
     '⚠️  OPENAI_API_KEY is not set. Set it in your environment before running the server.'
   );
 }
+
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+
+if (!GEMINI_API_KEY) {
+  console.warn(
+    '⚠️  GEMINI_API_KEY is not set. General education chat responses will be disabled.'
+  );
+}
+
+const GEMINI_MODEL = 'gemini-3-pro-preview';
+const GEMINI_ENDPOINT =
+  'https://generativelanguage.googleapis.com/v1beta/models/' +
+  `${GEMINI_MODEL}:generateContent?key=`;
+
+const educationSystemPrompt = `You are a knee-focused educational guide. Keep every response strictly about knee anatomy, biomechanics, common injuries, orthopedic knowledge, evidence-informed prevention strategies, and how the knee works. Stay informational only: do not diagnose, triage, or run any assessment. Avoid asking symptom-intake questions. Keep answers concise, clear, and grounded in well-established orthopedic facts.`;
 
 const systemPrompt = `
 You are Kneez, an expert knee pain intake assistant.
@@ -288,6 +304,65 @@ Always return valid JSON strictly matching the schema.
   }
 });
 
+app.post('/chat/education', async (req, res) => {
+  try {
+    const { message, history } = req.body as {
+      message?: unknown;
+      history?: ChatTurn[];
+    };
+
+    if (!message || typeof message !== 'string') {
+      return res.status(400).json({ error: 'message is required' });
+    }
+
+    if (!GEMINI_API_KEY) {
+      return res.status(500).json({ error: 'Gemini API key missing' });
+    }
+
+    const response = await fetch(`${GEMINI_ENDPOINT}${GEMINI_API_KEY}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        system_instruction: { parts: [{ text: educationSystemPrompt }] },
+        contents: [...mapHistoryToGemini(history ?? []), buildUserContent(message)],
+        //thinkingBudget: -1,
+        generationConfig: {
+          temperature: 0.35,
+          maxOutputTokens: 800,
+        },
+        safetySettings: [
+          { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_LOW_AND_ABOVE' },
+          { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+          { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+          { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+        ],
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Gemini request failed', errorText);
+      return res.status(500).json({ error: 'Education chat failed' });
+    }
+
+    const data = (await response.json()) as any;
+    const reply = extractGeminiText(data);
+
+    if (!reply) {
+      console.error('Gemini response missing text', data);
+      return res.status(500).json({ error: 'Education chat failed' });
+    }
+
+    return res.json({ reply });
+  } catch (err: any) {
+    console.error('Education chat error', err);
+    return res.status(500).json({
+      error: 'Education chat failed',
+      details: err?.message ?? 'unknown error',
+    });
+  }
+});
+
 
 app.listen(PORT, () => {
   console.log(`NLU server listening on port ${PORT}`);
@@ -364,4 +439,31 @@ function normalizeEntities(entities: SymptomEntities): SymptomEntities {
     trigger_activity,
     missing_fields,
   };
+}
+
+function mapHistoryToGemini(history: ChatTurn[]) {
+  return history.map((turn) => ({
+    role: turn.from === 'user' ? 'user' : 'model',
+    parts: [{ text: turn.text }],
+  }));
+}
+
+function buildUserContent(message: string) {
+  return {
+    role: 'user',
+    parts: [{ text: message }],
+  };
+}
+
+function extractGeminiText(data: any): string | null {
+  const parts = data?.candidates?.[0]?.content?.parts;
+  if (!Array.isArray(parts)) return null;
+
+  const textParts = parts
+    .map((part: any) => part?.text)
+    .filter((value: unknown): value is string => typeof value === 'string');
+
+  if (textParts.length === 0) return null;
+
+  return textParts.join('\n');
 }
