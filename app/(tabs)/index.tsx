@@ -1,14 +1,31 @@
-import { StyleSheet } from 'react-native';
+import { Button } from '@/components/ui/button';
+import { useAuth } from '@/src/contexts/AuthContext';
+import { useRouter } from 'expo-router';
+import { StyleSheet, Text, View } from 'react-native';
 
-import EditScreenInfo from '@/components/EditScreenInfo';
-import { Text, View } from '@/components/Themed';
+export default function HomeScreen() {
+  const router = useRouter();
+  const { loginMethod } = useAuth();
 
-export default function TabOneScreen() {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Tab One</Text>
-      <View style={styles.separator} lightColor="#eee" darkColor="rgba(255,255,255,0.1)" />
-      <EditScreenInfo path="app/(tabs)/index.tsx" />
+      <View style={styles.header}>
+        <Text style={styles.greeting}>Home</Text>
+        {loginMethod && <Text style={styles.loginMethod}>Signed in with {loginMethod}</Text>}
+      </View>
+
+      <Text style={styles.copy}>
+        Check in daily to keep your knees feeling their best. Start a new assessment any time you want to
+        update your plan.
+      </Text>
+
+      <Button
+        title="Start New Assessment"
+        size="lg"
+        accessibilityLabel="Start a new assessment"
+        onPress={() => router.push('/intake-chat')}
+        style={styles.primaryAction}
+      />
     </View>
   );
 }
@@ -16,16 +33,29 @@ export default function TabOneScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: 'center',
     justifyContent: 'center',
+    padding: 24,
+    gap: 18,
+    backgroundColor: '#0B1220',
   },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
+  header: {
+    gap: 6,
   },
-  separator: {
-    marginVertical: 30,
-    height: 1,
-    width: '80%',
+  greeting: {
+    fontSize: 26,
+    fontWeight: '700',
+    color: '#E5E7EB',
+  },
+  loginMethod: {
+    color: '#9CA3AF',
+    fontSize: 14,
+  },
+  copy: {
+    fontSize: 16,
+    lineHeight: 22,
+    color: '#CBD5E1',
+  },
+  primaryAction: {
+    alignSelf: 'flex-start',
   },
 });

@@ -1,23 +1,20 @@
-import { useColorScheme } from '@/components/useColorScheme';
+import { AuthProvider, useAuth } from '@/src/contexts/AuthContext';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useFonts } from 'expo-font';
-import { Tabs } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import { SafeAreaView } from 'react-native';
 import 'react-native-reanimated';
 
-
 export {
-  ErrorBoundary
+  ErrorBoundary,
 } from 'expo-router';
 
 export const unstable_settings = {
-  // Ensure that reloading on `/modal` keeps a back button present.
-  initialRouteName: '(tabs)',
+  initialRouteName: '(public)',
 };
 
-// Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
@@ -26,7 +23,6 @@ export default function RootLayout() {
     ...FontAwesome.font,
   });
 
-  // Expo Router uses Error Boundaries to catch errors in the navigation tree.
   useEffect(() => {
     if (error) throw error;
   }, [error]);
@@ -41,27 +37,36 @@ export default function RootLayout() {
     return null;
   }
 
-  return <RootLayoutNav />;
+  return (
+    <AuthProvider>
+      <RootLayoutNav />
+    </AuthProvider>
+  );
 }
 
 function RootLayoutNav() {
-  const colorScheme = useColorScheme();
+  const router = useRouter();
+  const { isAuthenticated } = useAuth();
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.replace('/(tabs)/index');
+    } else {
+      router.replace('/welcome');
+    }
+  }, [isAuthenticated, router]);
 
   return (
-    // <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-    //   <Stack>
-    //     <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-    //     <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
-    //   </Stack>
-    // </ThemeProvider>
     <SafeAreaView style={{ flex: 1 }}>
-      <Tabs screenOptions={{ headerShown: false }}>
-      <Tabs.Screen name="index" options={{ title: 'Home' }} />
-      <Tabs.Screen name="assess" options={{ title: 'Assess' }} />
-      <Tabs.Screen name="moves" options={{ title: 'Moves' }} />
-      <Tabs.Screen name="routines" options={{ title: 'Routines' }} />
-      <Tabs.Screen name="profile" options={{ title: 'Profile' }} />
-      </Tabs>
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="(public)" options={{ headerShown: false }} />
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="intake-chat" options={{ headerShown: false }} />
+        <Stack.Screen
+          name="login-modal"
+          options={{ presentation: 'modal', headerShown: false }}
+        />
+      </Stack>
     </SafeAreaView>
   );
 }

@@ -1,46 +1,48 @@
-// app/(public)/welcome.js
-import { useRouter } from 'expo-router';
+import { useAuth } from '@/src/contexts/AuthContext';
 import { useVideoPlayer, VideoView } from 'expo-video';
+import { Redirect, useRouter } from 'expo-router';
 import { useEffect } from 'react';
 import { Platform, Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
 
 export default function Welcome() {
   const router = useRouter();
+  const { isAuthenticated } = useAuth();
 
-  // Create the player and configure it once
-  const player = useVideoPlayer(require('../../assets/videos/hiking.mp4'), (player) => {
-    player.loop = true;   // isLooping
-    player.muted = true;  // isMuted
-    player.play();        // shouldPlay
+  const player = useVideoPlayer(require('../../assets/videos/hiking.mp4'), videoPlayer => {
+    videoPlayer.loop = true;
+    videoPlayer.muted = true;
+    videoPlayer.play();
   });
 
   useEffect(() => {
     if (!player) return;
-    player.loop = true;   // isLooping
-    player.muted = true;  // isMuted
-    player.play();        // shouldPlay
-  },[player])
+    player.loop = true;
+    player.muted = true;
+    player.play();
+  }, [player]);
+
+  if (isAuthenticated) {
+    return <Redirect href="/(tabs)/index" />;
+  }
 
   return (
     <SafeAreaView style={styles.safe}>
-      {/* Background video */}
       <VideoView
         style={styles.hero}
         player={player}
-        contentFit="cover"           // same as before
-        nativeControls={false}       // useNativeControls={false}
+        contentFit="cover"
+        nativeControls={false}
         accessibilityLabel="Nature scene with a person hiking"
       />
 
-      {/* Overlay content */}
       <View style={styles.content}>
         <Text style={styles.title}>Kneez</Text>
         <Text style={styles.subtitle}>
-          An AI-powered app for anyone with knee pain.
+          An AI-powered app for anyone with knee pain. Log in to continue your plan or start a new one.
         </Text>
 
         <Pressable
-          onPress={() => router.push('/auth/login')}
+          onPress={() => router.push('/login-modal')}
           style={({ pressed }) => [styles.cta, pressed && { opacity: 0.9 }]}
         >
           <Text style={styles.ctaText}>Continue</Text>
