@@ -1,6 +1,6 @@
 import { useAuth } from '@/src/contexts/AuthContext';
+import { Redirect, Slot, useRouter } from 'expo-router';
 import { useVideoPlayer, VideoView } from 'expo-video';
-import { Redirect, useRouter } from 'expo-router';
 import { useEffect } from 'react';
 import { Platform, Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
 
@@ -20,6 +20,10 @@ export default function Welcome() {
     player.muted = true;
     player.play();
   }, [player]);
+
+  if (!isAuthenticated) {
+    return <Slot />;
+  }
 
   if (isAuthenticated) {
     return <Redirect href="/(tabs)/index" />;

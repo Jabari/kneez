@@ -1,18 +1,19 @@
-import { AuthProvider, useAuth } from '@/src/contexts/AuthContext';
+// app/_layout.tsx
+import { AuthProvider } from '@/src/contexts/AuthContext';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useFonts } from 'expo-font';
-import { Stack, useRootNavigationState, useRouter } from 'expo-router';
+import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import { SafeAreaView } from 'react-native';
 import 'react-native-reanimated';
 
 export {
-  ErrorBoundary,
+  ErrorBoundary
 } from 'expo-router';
 
 export const unstable_settings = {
-  initialRouteName: '(public)',
+  initialRouteName: 'index',
 };
 
 SplashScreen.preventAutoHideAsync();
@@ -45,27 +46,10 @@ export default function RootLayout() {
 }
 
 function RootLayoutNav() {
-  const router = useRouter();
-  const rootNavigationState = useRootNavigationState();
-  const { isAuthenticated } = useAuth();
-
-  useEffect(() => {
-    if (!rootNavigationState?.key) return;
-
-    if (isAuthenticated) {
-      router.replace('/(tabs)/index');
-    } else {
-      router.replace('/welcome');
-    }
-  }, [isAuthenticated, router, rootNavigationState?.key]);
-
-  if (!rootNavigationState?.key) {
-    return null;
-  }
-
   return (
     <SafeAreaView style={{ flex: 1 }}>
-      <Stack screenOptions={{ headerShown: false }}>
+      <Stack screenOptions={{ headerShown: false }} initialRouteName="index">
+        <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="(public)" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="intake-chat" options={{ headerShown: false }} />
@@ -74,6 +58,6 @@ function RootLayoutNav() {
           options={{ presentation: 'modal', headerShown: false }}
         />
       </Stack>
-    </SafeAreaView>
+      </SafeAreaView>
   );
 }
