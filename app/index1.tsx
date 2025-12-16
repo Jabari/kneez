@@ -9,6 +9,7 @@ export default function HomeScreen() {
     return <Redirect href="/(tabs)/index" />;
   }
 
+  //return <Redirect href="/(public)/welcome" />;
   return (
     <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
       <Text style={{ fontSize: 24 }}>Hello from Kneez 👋</Text>

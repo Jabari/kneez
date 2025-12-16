@@ -10,13 +10,12 @@ export default function HomeScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.greeting}>Home</Text>
+        <Text style={styles.greeting}>neez</Text>
         {loginMethod && <Text style={styles.loginMethod}>Signed in with {loginMethod}</Text>}
       </View>
 
       <Text style={styles.copy}>
-        Check in daily to keep your knees feeling their best. Start a new assessment any time you want to
-        update your plan.
+        Feeling knee pain? Talk to me - we'll figure it out together!
       </Text>
 
       <Button
@@ -36,7 +35,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 24,
     gap: 18,
-    backgroundColor: '#0B1220',
+    backgroundColor: '#fff',
   },
   header: {
     gap: 6,
@@ -44,7 +43,7 @@ const styles = StyleSheet.create({
   greeting: {
     fontSize: 26,
     fontWeight: '700',
-    color: '#E5E7EB',
+    color: '#000',
   },
   loginMethod: {
     color: '#9CA3AF',
@@ -53,7 +52,7 @@ const styles = StyleSheet.create({
   copy: {
     fontSize: 16,
     lineHeight: 22,
-    color: '#CBD5E1',
+    color: '#000',
   },
   primaryAction: {
     alignSelf: 'flex-start',

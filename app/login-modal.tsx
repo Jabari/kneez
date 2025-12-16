@@ -39,7 +39,8 @@ export default function LoginModal() {
             variant="ghost"
             size="lg"
             style={styles.button}
-            onPress={() => router.back()}
+            //onPress={() => router.back()}
+            onPress={() => router.push('/intake-chat')}
           />
         </View>
       </View>
