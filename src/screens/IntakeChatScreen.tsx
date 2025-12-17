@@ -10,12 +10,26 @@ import {
   View,
 } from 'react-native';
 
+import { Button } from "@/components/ui/button"
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+
 import type { ChatTurn, SymptomEntities, UserIntent } from '../shared/types';
 import { classifyIntent } from '../api/router';
 import { parseSymptomMessage } from '../api/nlu';
 import { EMPTY_ENTITIES } from '../logic/emptyEntities';
 import { getNextIntakeQuestion } from '../logic/getNextIntakeQuestion';
 import { requestEducationalReply } from '../api/education';
+
 
 type ChatMessage = {
   id: string;
@@ -28,7 +42,8 @@ export default function IntakeChatScreen() {
     {
       id: 'm1',
       from: 'bot',
-      text: 'Hi! Tell me about your knee pain in your own words.',
+      text: `Hi, I’m Neez. Tell me about your knee pain and I’ll help!
+Note: Say something like "my left knee hurt when I squat" to see how I can help.`,
     },
   ]);
 

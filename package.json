@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
+    "@google/genai": "^1.33.0",
     "@react-navigation/native": "^7.1.8",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
