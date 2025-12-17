@@ -23,11 +23,12 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
-import type { SymptomEntities, UserIntent } from '../shared/types';
+import type { ChatTurn, SymptomEntities, UserIntent } from '../shared/types';
 import { classifyIntent } from '../api/router';
 import { parseSymptomMessage } from '../api/nlu';
 import { EMPTY_ENTITIES } from '../logic/emptyEntities';
 import { getNextIntakeQuestion } from '../logic/getNextIntakeQuestion';
+import { requestEducationalReply } from '../api/education';
 
 
 type ChatMessage = {
@@ -93,6 +94,29 @@ Note: Say something like "my left knee hurt when I squat" to see how I can help.
           id: `b-${Date.now()}`,
           from: 'bot',
           text: 'Your description could be a red flag. Please seek in-person medical care or urgent evaluation to stay safe.',
+        });
+        return;
+      }
+
+      if (resolvedIntent === 'general_education') {
+        const botReply = await requestEducationalReply(
+          trimmed,
+          mapChatHistory([...messages, userMsg])
+        );
+
+        addMessage({
+          id: `b-${Date.now()}`,
+          from: 'bot',
+          text: botReply,
+        });
+        return;
+      }
+
+      if (resolvedIntent !== 'acute_relief') {
+        addMessage({
+          id: `b-${Date.now()}`,
+          from: 'bot',
+          text: 'I can guide quick assessments for current knee pain flare-ups. If you need general education or another type of help, let me know and I can keep it informational.',
         });
         return;
       }
@@ -185,6 +209,10 @@ Note: Say something like "my left knee hurt when I squat" to see how I can help.
       </View>
     </KeyboardAvoidingView>
   );
+}
+
+function mapChatHistory(history: ChatMessage[]): ChatTurn[] {
+  return history.map(({ from, text }) => ({ from, text }));
 }
 
 function buildEntitiesSummary(entities: SymptomEntities): string {
