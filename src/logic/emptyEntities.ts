@@ -1,4 +1,4 @@
-import type { SymptomEntities } from '../../shared/types';
+import type { SymptomEntities } from '../shared/types';
 
 export const EMPTY_ENTITIES: SymptomEntities = {
   symptom_side: 'unsure',
