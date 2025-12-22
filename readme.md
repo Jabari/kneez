@@ -1,166 +1,37 @@
-# 🦵 **Kneez App – Functional Specification (MVP)**
+# Kneez App
 
-## 📌 Purpose
-Kneez is a mobile app that provides **immediate pain relief for knee pain** using **voice/text interaction, anatomical diagrams, and personalized movement correction tips**. It uses conversational AI and NLP to triage symptoms and deliver biomechanical interventions.
+This repository contains the Kneez mobile front-end (Expo + React Native) and a small local server used to power intake flows. Use this document to understand the layout, required services, and how to run development and test tasks.
 
----
+## Project structure
+- `app/` – Expo Router entry points that map URLs/routes to screens (for example `intake-chat.tsx` renders the intake chat UI).
+- `assets/` – Shared fonts, images, and videos bundled with the app.
+- `components/` – Reusable UI primitives (Themed wrappers, buttons, inputs) plus supporting hooks for platform-specific behavior.
+- `constants/` – App-wide design tokens such as color definitions.
+- `docs/` – Developer-facing reference notes (e.g., UI library setup instructions).
+- `src/` – Core application code:
+  - `api/` – Client functions that talk to the local NLU/education services.
+  - `contexts/` – React context providers.
+  - `logic/` – Pure helper logic for intake/question flow.
+  - `screens/` – Screen-level React components wired into the router.
+  - `shared/` – Types shared between the client and server.
+  - `server.ts` – The local Express API that proxies NLU/education requests to model providers.
+- `tests/` – Lightweight Node test harness (TypeScript) plus mocks for Expo dependencies.
+- `types/` – Global type declarations used by the app runtime.
+- `kneez-app/` – Early scaffolding for a future assessment-focused UI (placeholder routes and types kept separate from the main app).
 
-## 1. 🧭 **Core User Flow**
+## Running the app locally
+1. Install dependencies: `npm install`.
+2. Start the local API server (defaults to `http://localhost:4000`): `npm run server:dev`.
+   - Set `OPENAI_API_KEY` to enable intent and symptom extraction.
+   - Set `GEMINI_API_KEY` to enable general education replies; without it, those routes will be disabled.
+3. Point the client at the local server by ensuring `EXPO_PUBLIC_NLU_BASE_URL=http://localhost:4000` (or set `expo.extra.nluBaseUrl` in `app.json`).
+4. Launch the Expo app: `npm start` (then pick iOS, Android, or Web in the Expo CLI).
 
-### 1.1 Initial Interaction
-- App opens with prompt: “Hi, what’s bothering you?”
-- Users long-press **voice button** or toggle to **text input** to describe:
-  - Symptom
-  - Pain trigger (e.g., squatting, stairs)
-  - Additional context (optional)
+## Tests
+Run the TypeScript test harness with `npm test`. The suite uses mocked `fetch` calls so no network or API keys are required.
 
-### 1.2 Pain Location Selection
-- User interacts with **3D knee diagram**:
-  - Two knees shown (left + right), clearly labeled
-  - Users **rotate** the model freely (pan/drag)
-  - Users can **tap one area per knee**, maximum 2 total
-- App asks for **confirmation** of tapped area using **layman terms**
-  - e.g., “You tapped the inside of your right knee, slightly below the kneecap. Is this where you feel your pain?”
-
-### 1.3 Movement Tip Delivery
-- If sufficient info is available:
-  - App delivers a **captioned video** + **audio instructions** (unless muted)
-  - Tips are selected via semantic matching: `pain location` + `activity trigger`
-- If info is **insufficient**:
-  - App dynamically asks for missing fields (pain type, duration, etc.)
-- After tip is shown:
-  - User is polled: “How do your knees feel now?”
-  - Options: 😁 / 🙂 / 😐 / 🙁 / 😢 (smiley face feedback scale)
-
-### 1.4 Iteration & Escalation
-- If 😁 or 🙂:
-  - Show success message and advice on how to integrate the tip in daily movement
-  - Inform the user that **strengthening/stretching features** are coming soon
-- If 😐, 🙁, or 😢:
-  - Offer a second tip or ask for more symptom data
-  - After 3 failed attempts:
-    - App apologizes
-    - Collects a full case (all fields)
-    - Tells user a human review will occur
-
----
-
-## 2. 🧠 NLP & Data Extraction Pipeline
-
-### 2.1 Required Fields (every case)
-- **Pain Location** (via tap + text)
-- **Triggering Activity** (e.g., squatting)
-- **Laterality** (left, right, both)
-
-### 2.2 Optional Fields (asked when needed)
-- Pain type (sharp, dull, burning…)
-- Pain severity (inferred from emoji feedback or asked directly)
-- Duration
-- Context (e.g., “after tennis”)
-
-App will prompt user for more details if confidence is low or no tip match is found.
-
----
-
-## 3. 🎯 Movement Tip Matching
-
-### Matching Logic:
-- **Exact Match Priority:** Pain location + activity trigger
-- **Fallback:** Closest match (based on similarity scores)
-- **Last resort:** General tip for that activity
-
-### Always followed by:
-- Poll asking: Did this help? (emoji rating)
-- Results used to train feedback model (build success rate data)
-
----
-
-## 4. 🗂️ Case Management
-
-### Each session is stored as a **structured case**:
-```json
-{
-  "case_id": "CASE00123",
-  "user_id": "USER048",
-  "input_symptoms": "My knee hurts when I walk downstairs",
-  "pain_location": "inferior patella",
-  "trigger": "stairs down",
-  "laterality": "right",
-  "movement_tips_shown": [
-    {
-      "tip_id": "TIP0012",
-      "user_feedback": "neutral"
-    }
-  ],
-  "status": "resolved",
-  "timestamp": "2025-04-28T18:00:00Z"
-}
-```
-
-### Features:
-- Stored under user profile
-- Viewable in **read-only session history**
-- Sharable via link (read-only web view; future version only)
-
----
-
-## 5. 🧩 Movement Tip Schema
-
-Each tip includes:
-```json
-{
-  "id": "TIP0012",
-  "anatomical_targets": ["patellar tendon"],
-  "triggering_activities": ["squatting"],
-  "tip_content": {
-    "video_url": "...",
-    "caption_text": "...",
-    "audio_script": "..."
-  },
-  "contraindications": ["Not for meniscal tears"],
-  "feedback_log": [
-    {
-      "case_id": "CASE034",
-      "outcome": "positive",
-      "user_rating": ":)"
-    }
-  ]
-}
-```
-
----
-
-## 6. 📲 User Interface
-
-### Home Screen
-- Heading: “Hi, what’s bothering you?”
-- Voice button (long-press to record)
-- Keyboard toggle (doubles as mute button)
-- 3D Knee model (rotate + tap)
-
-### Tip Display
-- Video with captions
-- Audio instruction unless muted
-- Emoji-based feedback poll
-
-### History Screen
-- List of past cases (summary view)
-- Tap to view full case (read-only)
-
----
-
-## 7. 🔐 Data Handling & Learning
-- User data is stored securely (e.g., Firebase, Supabase)
-- Emoji feedback & tip outcomes are stored to train future tip rankings
-- NLP fields stored as structured JSON per case
-- User data anonymized for research/model improvement
-
----
-
-## 8. ❌ Out-of-Scope (MVP)
-- Strengthening/stretching programs (planned for later)
-- PDF reports / live dashboards for doctors
-- User-generated notes or journaling
-- Multi-language support
-
----
+Current coverage (see `tests/run-tests.ts`):
+- `parseSymptomMessage` sends the user message and prior extracted entities to `/nlu/symptom-entities` and returns the mocked entity payload.
+- `getNextIntakeQuestion` walks through the priority order of missing fields, returning the correct follow-up prompts and `null` once intake is complete.
+- `classifyIntent` posts the initial user message to `/nlu/intent` and yields the intent classification JSON (`general_education` in the test fixture).
+- `requestEducationalReply` posts a message plus prior chat turns to `/chat/education` and returns the mocked educational reply text.

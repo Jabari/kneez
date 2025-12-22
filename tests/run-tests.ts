@@ -1,15 +1,25 @@
 import assert from 'node:assert';
 
-import { parseSymptomMessage } from '../src/api/nlu.ts';
-import { getNextIntakeQuestion } from '../src/logic/getNextIntakeQuestion.ts';
-import { EMPTY_ENTITIES } from '../src/logic/emptyEntities.ts';
-import type { SymptomEntities } from '../shared/types.ts';
+import { classifyIntent } from '../src/api/router';
+import { parseSymptomMessage } from '../src/api/nlu';
+import { requestEducationalReply } from '../src/api/education';
+import { getNextIntakeQuestion } from '../src/logic/getNextIntakeQuestion';
+import { EMPTY_ENTITIES } from '../src/logic/emptyEntities';
+import type { ChatTurn, SymptomEntities } from '../src/shared/types';
 
 type TestCase = { name: string; fn: () => void | Promise<void> };
 const tests: TestCase[] = [];
 
 function test(name: string, fn: () => void | Promise<void>) {
   tests.push({ name, fn });
+}
+
+function withMockedFetch(impl: typeof fetch) {
+  const original = globalThis.fetch;
+  globalThis.fetch = impl;
+  return () => {
+    globalThis.fetch = original;
+  };
 }
 
 test('parseSymptomMessage posts message and previous entities and returns parsed entities', async () => {
@@ -29,11 +39,10 @@ test('parseSymptomMessage posts message and previous entities and returns parsed
     missing_fields: [],
   };
 
-  const originalFetch = globalThis.fetch;
   let capturedBody: any;
   let capturedUrl: string | undefined;
 
-  globalThis.fetch = (async (url, options) => {
+  const restoreFetch = withMockedFetch(async (url, options) => {
     capturedUrl = typeof url === 'string' ? url : url.toString();
     capturedBody = options?.body;
     return {
@@ -42,7 +51,7 @@ test('parseSymptomMessage posts message and previous entities and returns parsed
       json: async () => ({ entities: expectedEntities }),
       text: async () => '',
     } as any;
-  }) as typeof fetch;
+  });
 
   try {
     const result = await parseSymptomMessage('my knee hurts', previousEntities);
@@ -55,7 +64,7 @@ test('parseSymptomMessage posts message and previous entities and returns parsed
       previousEntities,
     });
   } finally {
-    globalThis.fetch = originalFetch;
+    restoreFetch();
   }
 });
 
@@ -111,6 +120,55 @@ test('getNextIntakeQuestion prioritizes missing fields order and returns null wh
     missing_fields: [],
   };
   assert.strictEqual(getNextIntakeQuestion(complete), null);
+});
+
+test('classifyIntent posts the message to the router endpoint', async () => {
+  const restoreFetch = withMockedFetch(async (url, options) => {
+    return {
+      ok: true,
+      status: 200,
+      json: async () => ({ intent: 'general_education' }),
+      text: async () => '',
+    } as any;
+  });
+
+  try {
+    const classification = await classifyIntent('what does my kneecap do?');
+    assert.deepStrictEqual(classification, { intent: 'general_education' });
+  } finally {
+    restoreFetch();
+  }
+});
+
+test('requestEducationalReply sends the message history and returns the reply', async () => {
+  const history: ChatTurn[] = [
+    { from: 'user', text: 'what does a meniscus do?' },
+    { from: 'bot', text: 'It cushions the knee joint.' },
+  ];
+
+  let capturedBody: string | null = null;
+  const restoreFetch = withMockedFetch(async (_url, options) => {
+    capturedBody = typeof options?.body === 'string' ? options.body : null;
+    return {
+      ok: true,
+      status: 200,
+      json: async () => ({ reply: 'It stabilizes the knee and absorbs shock.' }),
+      text: async () => '',
+    } as any;
+  });
+
+  try {
+    const reply = await requestEducationalReply('tell me more about the meniscus', history);
+    assert.strictEqual(reply, 'It stabilizes the knee and absorbs shock.');
+    assert.ok(capturedBody);
+    const parsed = JSON.parse(capturedBody ?? '{}');
+    assert.deepStrictEqual(parsed, {
+      message: 'tell me more about the meniscus',
+      history,
+    });
+  } finally {
+    restoreFetch();
+  }
 });
 
 async function run() {
