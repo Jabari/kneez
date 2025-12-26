@@ -175,7 +175,19 @@ Guardrails: temperature ≤ 0.2; top_p ≤ 0.2 to keep outputs deterministic.
 Telemetry: log the raw user message + classified intent to spot drift and refine prompts later.`;
 
 const app = express();
-app.use(cors());
+const allowedOrigins = (process.env.CORS_ORIGINS ?? '')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter((origin) => origin.length > 0);
+
+const corsOptions: cors.CorsOptions = {
+  origin: allowedOrigins.length > 0 ? allowedOrigins : '*',
+  methods: ['GET', 'HEAD', 'OPTIONS', 'POST'],
+  allowedHeaders: ['Content-Type'],
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 app.use(express.json());
 
 app.get('/health', (_req, res) => {
