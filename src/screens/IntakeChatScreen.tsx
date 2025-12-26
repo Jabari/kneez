@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import Markdown from 'react-native-markdown-display';
 
 import { Button } from "@/components/ui/button"
 import {
@@ -165,7 +166,9 @@ Note: Say something like "my left knee hurt when I squat" to see how I can help.
           isUser ? styles.userBubble : styles.botBubble,
         ]}
       >
-        <Text style={styles.messageText}>{item.text}</Text>
+        <Markdown style={isUser ? markdownStylesUser : markdownStylesBot}>
+          {item.text}
+        </Markdown>
       </View>
     );
   };
@@ -271,10 +274,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#1F2937',
   },
-  messageText: {
-    color: '#F9FAFB',
-    fontSize: 15,
-  },
   footer: {
     flexDirection: 'row',
     paddingHorizontal: 12,
@@ -308,5 +307,58 @@ const styles = StyleSheet.create({
   sendButtonText: {
     color: '#022C22',
     fontWeight: '600',
+  },
+});
+
+const markdownBase = {
+  body: {
+    fontSize: 15,
+    lineHeight: 22,
+  },
+  bullet_list: {
+    marginVertical: 0,
+    paddingVertical: 0,
+  },
+  ordered_list: {
+    marginVertical: 0,
+    paddingVertical: 0,
+  },
+  paragraph: {
+    marginTop: 0,
+    marginBottom: 8,
+  },
+};
+
+const markdownStylesUser = StyleSheet.create({
+  ...markdownBase,
+  body: {
+    ...markdownBase.body,
+    color: '#F9FAFB',
+  },
+  text: {
+    color: '#F9FAFB',
+  },
+  bullet_list_icon: {
+    color: '#F9FAFB',
+  },
+  ordered_list_icon: {
+    color: '#F9FAFB',
+  },
+});
+
+const markdownStylesBot = StyleSheet.create({
+  ...markdownBase,
+  body: {
+    ...markdownBase.body,
+    color: '#E5E7EB',
+  },
+  text: {
+    color: '#E5E7EB',
+  },
+  bullet_list_icon: {
+    color: '#E5E7EB',
+  },
+  ordered_list_icon: {
+    color: '#E5E7EB',
   },
 });
