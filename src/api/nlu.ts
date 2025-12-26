@@ -6,7 +6,7 @@ const manifestBaseUrl =
   (Constants.manifestExtra as { nluBaseUrl?: string } | undefined)?.nluBaseUrl;
 
 const BASE_URL =
-  process.env.EXPO_PUBLIC_NLU_BASE_URL || manifestBaseUrl || 'http://localhost:4000';
+  process.env.EXPO_PUBLIC_NLU_BASE_URL || manifestBaseUrl || 'http://localhost:3000';
 
 export async function parseSymptomMessage(
   message: string,

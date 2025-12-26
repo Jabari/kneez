@@ -15,7 +15,7 @@ type SymptomRequestBody = {
   previousEntities?: Partial<SymptomEntities>;
 };
 
-const PORT = Number(process.env.PORT) || 4000;
+const PORT = Number(process.env.PORT) || 3000;
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
