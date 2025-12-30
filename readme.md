@@ -21,10 +21,10 @@ This repository contains the Kneez mobile front-end (Expo + React Native) and a 
 
 ## Running the app locally
 1. Install dependencies: `npm install`.
-2. Start the local API server (defaults to `http://localhost:3000`): `npm run server:dev`.
+2. Start the local API server (defaults to `http://localhost:4000`): `npm run server:dev`.
    - Set `OPENAI_API_KEY` to enable intent and symptom extraction.
    - Set `GEMINI_API_KEY` to enable general education replies; without it, those routes will be disabled.
-3. Point the client at the local server by ensuring `EXPO_PUBLIC_NLU_BASE_URL=http://localhost:3000` (or set `expo.extra.nluBaseUrl` in `app.json`).
+3. Point the client at the local server by ensuring `EXPO_PUBLIC_NLU_BASE_URL=http://localhost:4000` (or set `expo.extra.nluBaseUrl` in `app.json`).
 4. Launch the Expo app: `npm start` (then pick iOS, Android, or Web in the Expo CLI).
 
 ## Tests

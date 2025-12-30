@@ -48,7 +48,7 @@ Your job:
 - Extract these fields:
   - symptom_side: "left", "right", "both", or "unsure" if not clearly stated.
   - symptom_description: array of short phrases describing symptoms
-    (e.g. ["sharp pain", "stiff", "numb", "tingling", "popping"]).
+    (e.g. ["sharp pain", "stiff", "numb", "tingling", "popping", "hurts", "aches"]).
   - symptom_location: concise description of where on/around the knee
     (e.g. "behind right kneecap", "outside of left knee", "below left kneecap").
   - trigger_activity: array of activities that trigger or worsen pain

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   FlatList,
   KeyboardAvoidingView,
@@ -173,6 +173,17 @@ Note: Say something like "my left knee hurt when I squat" to see how I can help.
     );
   };
 
+  const textInputRef = useRef<TextInput>(null);
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      textInputRef.current?.focus();
+    }, 100); // small delay avoids navigation timing issues
+
+    return () => clearTimeout(timeout);
+  }, []);
+
+
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -189,6 +200,7 @@ Note: Say something like "my left knee hurt when I squat" to see how I can help.
 
       <View style={styles.footer}>
         <TextInput
+          ref={textInputRef}
           style={styles.input}
           placeholder={
             hasCompletedIntake
@@ -199,6 +211,15 @@ Note: Say something like "my left knee hurt when I squat" to see how I can help.
           onChangeText={setInput}
           editable={!isLoading}
           multiline
+          autoFocus
+          returnKeyType="send"
+          submitBehavior="submit"
+          onSubmitEditing={handleSend}
+          onKeyPress={({ nativeEvent }) => {
+            if (nativeEvent.key === 'Enter' && !nativeEvent.shiftKey) {
+              handleSend();
+            }
+          }}
         />
         <TouchableOpacity
           style={[styles.sendButton, isLoading && styles.sendButtonDisabled]}
