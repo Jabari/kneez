@@ -15,7 +15,7 @@ type SymptomRequestBody = {
   previousEntities?: Partial<SymptomEntities>;
 };
 
-const PORT = Number(process.env.PORT) || 4000;
+const PORT = Number(process.env.PORT) || 3000;
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -48,7 +48,7 @@ Your job:
 - Extract these fields:
   - symptom_side: "left", "right", "both", or "unsure" if not clearly stated.
   - symptom_description: array of short phrases describing symptoms
-    (e.g. ["sharp pain", "stiff", "numb", "tingling", "popping"]).
+    (e.g. ["sharp pain", "stiff", "numb", "tingling", "popping", "hurts", "aches"]).
   - symptom_location: concise description of where on/around the knee
     (e.g. "behind right kneecap", "outside of left knee", "below left kneecap").
   - trigger_activity: array of activities that trigger or worsen pain
@@ -175,7 +175,19 @@ Guardrails: temperature ≤ 0.2; top_p ≤ 0.2 to keep outputs deterministic.
 Telemetry: log the raw user message + classified intent to spot drift and refine prompts later.`;
 
 const app = express();
-app.use(cors());
+const allowedOrigins = (process.env.CORS_ORIGINS ?? '')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter((origin) => origin.length > 0);
+
+const corsOptions: cors.CorsOptions = {
+  origin: allowedOrigins.length > 0 ? allowedOrigins : '*',
+  methods: ['GET', 'HEAD', 'OPTIONS', 'POST'],
+  allowedHeaders: ['Content-Type'],
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 app.use(express.json());
 
 app.get('/health', (_req, res) => {
