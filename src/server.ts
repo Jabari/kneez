@@ -3,12 +3,8 @@ import 'dotenv/config';
 import express from 'express';
 import OpenAI from 'openai';
 
-import type {
-  IntentClassification,
-  ChatTurn,
-  SymptomEntities,
-  SymptomFieldName,
-} from './shared/types';
+import type { IntentClassification, ChatTurn, SymptomEntities } from './shared/types';
+import { mergeSymptomEntities, normalizeEntities } from './logic/symptomEntities';
 
 type SymptomRequestBody = {
   message?: unknown;
@@ -379,79 +375,6 @@ app.post('/chat/education', async (req, res) => {
 app.listen(PORT, () => {
   console.log(`NLU server listening on port ${PORT}`);
 });
-
-function mergeSymptomEntities(
-  previous: Partial<SymptomEntities> | undefined,
-  current: SymptomEntities
-): SymptomEntities {
-  if (!previous) {
-    return normalizeEntities(current);
-  }
-
-  const symptom_side =
-    previous.symptom_side && previous.symptom_side !== 'unsure'
-      ? previous.symptom_side
-      : current.symptom_side;
-
-  const symptom_description = Array.from(
-    new Set([...(previous.symptom_description ?? []), ...current.symptom_description])
-  ).filter((item) => item && item.trim().length > 0);
-
-  const symptom_location =
-    previous.symptom_location && previous.symptom_location.trim().length > 0
-      ? previous.symptom_location
-      : current.symptom_location;
-
-  const trigger_activity = Array.from(
-    new Set([...(previous.trigger_activity ?? []), ...current.trigger_activity])
-  ).filter((item) => item && item.trim().length > 0);
-
-  const missing_fields: SymptomFieldName[] = [];
-  if (!symptom_side || symptom_side === 'unsure') missing_fields.push('symptom_side');
-  if (symptom_description.length === 0) missing_fields.push('symptom_description');
-  if (!symptom_location || symptom_location.trim().length === 0)
-    missing_fields.push('symptom_location');
-  if (trigger_activity.length === 0) missing_fields.push('trigger_activity');
-
-  return {
-    symptom_side,
-    symptom_description,
-    symptom_location,
-    trigger_activity,
-    missing_fields,
-  };
-}
-
-function normalizeEntities(entities: SymptomEntities): SymptomEntities {
-  const symptom_description = (entities.symptom_description ?? []).filter(
-    (item) => item && item.trim().length > 0
-  );
-  const trigger_activity = (entities.trigger_activity ?? []).filter(
-    (item) => item && item.trim().length > 0
-  );
-
-  const missing_fields: SymptomFieldName[] = [];
-  if (!entities.symptom_side || entities.symptom_side === 'unsure') {
-    missing_fields.push('symptom_side');
-  }
-  if (symptom_description.length === 0) {
-    missing_fields.push('symptom_description');
-  }
-  if (!entities.symptom_location || entities.symptom_location.trim().length === 0) {
-    missing_fields.push('symptom_location');
-  }
-  if (trigger_activity.length === 0) {
-    missing_fields.push('trigger_activity');
-  }
-
-  return {
-    symptom_side: entities.symptom_side,
-    symptom_description,
-    symptom_location: entities.symptom_location,
-    trigger_activity,
-    missing_fields,
-  };
-}
 
 function mapHistoryToGemini(history: ChatTurn[]) {
   return history.map((turn) => ({
