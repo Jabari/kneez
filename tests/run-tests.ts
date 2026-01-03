@@ -5,6 +5,7 @@ import { parseSymptomMessage } from '../src/api/nlu';
 import { requestEducationalReply } from '../src/api/education';
 import { getNextIntakeQuestion } from '../src/logic/getNextIntakeQuestion';
 import { EMPTY_ENTITIES } from '../src/logic/emptyEntities';
+import { normalizeSymptomLocation } from '../src/logic/symptomEntities';
 import type { ChatTurn, SymptomEntities } from '../src/shared/types';
 
 type TestCase = { name: string; fn: () => void | Promise<void> };
@@ -169,6 +170,12 @@ test('requestEducationalReply sends the message history and returns the reply', 
   } finally {
     restoreFetch();
   }
+});
+
+test('normalizeSymptomLocation treats unspecified as missing', () => {
+  assert.strictEqual(normalizeSymptomLocation('unspecified'), '');
+  assert.strictEqual(normalizeSymptomLocation('  unspecified  '), '');
+  assert.strictEqual(normalizeSymptomLocation('outside knee'), 'outside knee');
 });
 
 async function run() {
