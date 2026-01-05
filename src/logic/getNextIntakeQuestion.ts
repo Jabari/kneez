@@ -7,6 +7,7 @@ export function getNextIntakeQuestion(entities: SymptomEntities): string | null 
     return 'Which knee is bothering you — left, right, or both?';
   }
   if (missing.includes('symptom_location')) {
+    console.log('hit')
     return 'Where exactly around your knee do you feel it most (front, back, inside, outside, above/below kneecap)?';
   }
   if (missing.includes('trigger_activity')) {
