@@ -16,6 +16,7 @@ export interface QuestionOption {
 
 export interface QuestionNode extends BaseAssessmentNode {
   type: 'question';
+  prompt?: string;
   question: string;
   save_to?: string;
   options?: QuestionOption[];

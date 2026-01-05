@@ -343,12 +343,11 @@ function buildEntitiesSummary(entities: SymptomEntities): string {
 
 function formatAssessmentNode(node: AssessmentNodePayload): string {
   if (node.type === 'question') {
-    const options = node.options?.map((opt) => `• ${opt.label}`).join('\n');
-    return [node.title, node.question, options].filter(Boolean).join('\n\n');
+    return node.prompt ?? node.question ?? node.title ?? 'Next step';
   }
 
   if (node.type === 'movement_test') {
-    return [node.title, node.prompt].filter(Boolean).join('\n\n');
+    return node.prompt ?? node.title ?? 'Next step';
   }
 
   if (node.type === 'assessment') {
