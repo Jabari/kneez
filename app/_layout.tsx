@@ -1,5 +1,6 @@
 // app/_layout.tsx
 import { AuthProvider } from '@/src/contexts/AuthContext';
+import { AssessmentProvider } from '@/src/contexts/AssessmentContext';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
@@ -40,7 +41,9 @@ export default function RootLayout() {
 
   return (
     <AuthProvider>
-      <RootLayoutNav />
+      <AssessmentProvider>
+        <RootLayoutNav />
+      </AssessmentProvider>
     </AuthProvider>
   );
 }
