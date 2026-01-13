@@ -122,7 +122,7 @@ Decision rules (apply in this order; the first match wins):
 
 red_flag – Any red-flag symptoms (e.g., recent major trauma, audible pop with immediate swelling and inability to bear weight, severe deformity, fever with hot/red joint, suspected infection, foot/calf swelling with shortness of breath, numbness with loss of bladder/bowel control).
 
-acute_relief – The user reports knee symptoms during a specific activity and seems to want immediate relief (e.g., “my left knee hurts when I squat/go upstairs/run”).
+acute_relief – The user reports knee symptoms and seems to want immediate relief (e.g., “my left knee hurts”).
 
 rehab_request – The user asks for stretching, mobility, or strengthening plans, long-term fixes, rehab programs, or prevention (not immediate symptom relief).
 

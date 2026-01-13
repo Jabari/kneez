@@ -11,6 +11,7 @@
     "server:dev": "ts-node -P tsconfig.server.json src/server.ts",
     "server:build": "tsc -p tsconfig.server.json",
     "server:start": "node dist/server.js",
+    "build:web": "npx expo export -p web",
     "test": "TS_NODE_PROJECT=tsconfig.test.json node -r ts-node/register -r ./tests/register-mocks.cjs tests/run-tests.ts"
   },
   "engines": {
