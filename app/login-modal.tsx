@@ -1,4 +1,4 @@
-import { Button } from '@/components/ui/button';
+import { Button } from '../components/ui/button';
 import { useAuth } from '../src/contexts/AuthContext';
 import { useRouter } from 'expo-router';
 import { SafeAreaView, StyleSheet, Text, View } from 'react-native';

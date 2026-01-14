@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import Markdown from 'react-native-markdown-display';
 
-import { Button } from "@/components/ui/button"
+import { Button } from "../../components/ui/button"
 import {
   Card,
   CardAction,
@@ -20,9 +20,9 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+} from "../../components/ui/card"
+import { Input } from "../../components/ui/input"
+import { Label } from "../../components/ui/label"
 
 import type { ChatTurn, SymptomEntities, UserIntent } from '../shared/types';
 import { classifyIntent } from '../api/router';
