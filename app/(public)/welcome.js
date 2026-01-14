@@ -1,5 +1,5 @@
 // app/(public)/welcome.js
-import { useAuth } from '@/src/contexts/AuthContext';
+import { useAuth } from '../../src/contexts/AuthContext';
 import { useRouter } from 'expo-router';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { useEffect } from 'react';

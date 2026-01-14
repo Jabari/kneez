@@ -1,5 +1,5 @@
 // app/_layout.tsx
-import { AuthProvider } from '@/src/contexts/AuthContext';
+import { AuthProvider } from '../src/contexts/AuthContext';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
