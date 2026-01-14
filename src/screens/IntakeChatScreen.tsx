@@ -11,25 +11,16 @@ import {
 } from 'react-native';
 import Markdown from 'react-native-markdown-display';
 
-import { Button } from "@/components/ui/button"
-import {
-  Card,
-  CardAction,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-
 import type { ChatTurn, SymptomEntities, UserIntent } from '../shared/types';
+import type { AssessmentNodePayload } from '../shared/assessment';
 import { classifyIntent } from '../api/router';
 import { parseSymptomMessage } from '../api/nlu';
 import { EMPTY_ENTITIES } from '../logic/emptyEntities';
 import { getNextIntakeQuestion } from '../logic/getNextIntakeQuestion';
 import { requestEducationalReply } from '../api/education';
+import { checkAssessmentHealth, sendAssessmentAnswer, startAssessmentSession } from '../api/assessment';
+import { useAssessment } from '../contexts/AssessmentContext';
+import { isAcuteReliefReady } from '../logic/intentGuards';
 
 
 type ChatMessage = {
@@ -53,14 +44,74 @@ Note: Say something like "my left knee hurt when I squat" to see how I can help.
   const [isLoading, setIsLoading] = useState(false);
   const [hasCompletedIntake, setHasCompletedIntake] = useState(false);
   const [intent, setIntent] = useState<UserIntent | null>(null);
+  const [serverError, setServerError] = useState<string | null>(null);
+
+  const {
+    isServerHealthy,
+    setServerHealthy,
+    sessionId,
+    currentNode,
+    setSession,
+    setCurrentNode,
+  } = useAssessment();
 
   const addMessage = (msg: ChatMessage) => {
     setMessages(prev => [...prev, msg]);
   };
 
+  useEffect(() => {
+    const checkHealth = async () => {
+      const healthy = await checkAssessmentHealth();
+      setServerHealthy(healthy);
+      setServerError(healthy ? null : 'Assessment server is down. Please try again later.');
+    };
+
+    checkHealth();
+  }, [setServerHealthy]);
+
   const handleSend = async () => {
     const trimmed = input.trim();
     if (!trimmed || isLoading) return;
+    if (serverError) return;
+
+    if (sessionId && currentNode) {
+      setIsLoading(true);
+      try {
+        addMessage({
+          id: `u-${Date.now()}`,
+          from: 'user',
+          text: trimmed,
+        });
+        setInput('');
+
+        const response = await sendAssessmentAnswer(sessionId, {
+          node_id: currentNode.id,
+          value: trimmed,
+        });
+
+        if (response.next_node) {
+          setCurrentNode(response.next_node);
+          addMessage({
+            id: `b-${Date.now()}`,
+            from: 'bot',
+            text: formatAssessmentNode(response.next_node),
+          });
+        } else if (response.completed) {
+          setCurrentNode(null);
+          addMessage({
+            id: `b-${Date.now()}`,
+            from: 'bot',
+            text: 'Assessment complete. Thanks for sharing your details!',
+          });
+        }
+      } catch (error) {
+        console.error('Failed to progress assessment', error);
+        setServerError('Unable to continue assessment. Please try again later.');
+      } finally {
+        setIsLoading(false);
+      }
+      return;
+    }
 
     const userMsg: ChatMessage = {
       id: `u-${Date.now()}`,
@@ -134,7 +185,7 @@ Note: Say something like "my left knee hurt when I squat" to see how I can help.
           text: followUp,
         };
         addMessage(botMsg);
-      } else {
+      } else if (isAcuteReliefReady(resolvedIntent, newEntities)) {
         setHasCompletedIntake(true);
         const summaryText = buildEntitiesSummary(newEntities);
         const botMsg: ChatMessage = {
@@ -143,6 +194,25 @@ Note: Say something like "my left knee hurt when I squat" to see how I can help.
           text: `Got it, thanks. Here's what I understand about your knee so far:\n\n${summaryText}\n\nNext, I’ll guide you through some simple movement checks to refine this further.`,
         };
         addMessage(botMsg);
+
+        if (isServerHealthy === false) {
+          setServerError('Assessment server is down. Please try again later.');
+          return;
+        }
+
+        try {
+          const session = await startAssessmentSession();
+          setSession(session.session_id, session.node);
+          setCurrentNode(session.node);
+          addMessage({
+            id: `b-${Date.now()}`,
+            from: 'bot',
+            text: formatAssessmentNode(session.node),
+          });
+        } catch (error) {
+          console.error('Failed to start assessment session', error);
+          setServerError('Unable to start assessment. Please try again later.');
+        }
       }
     } catch (err: any) {
       console.error('Error during NLU:', err);
@@ -198,6 +268,10 @@ Note: Say something like "my left knee hurt when I squat" to see how I can help.
         contentContainerStyle={styles.messagesContent}
       />
 
+      {serverError ? (
+        <Text style={styles.errorBanner}>{serverError}</Text>
+      ) : null}
+
       <View style={styles.footer}>
         <TextInput
           ref={textInputRef}
@@ -209,7 +283,7 @@ Note: Say something like "my left knee hurt when I squat" to see how I can help.
           }
           value={input}
           onChangeText={setInput}
-          editable={!isLoading}
+          editable={!isLoading && !serverError}
           multiline
           autoFocus
           returnKeyType="send"
@@ -224,7 +298,7 @@ Note: Say something like "my left knee hurt when I squat" to see how I can help.
         <TouchableOpacity
           style={[styles.sendButton, isLoading && styles.sendButtonDisabled]}
           onPress={handleSend}
-          disabled={isLoading}
+          disabled={isLoading || !!serverError}
         >
           <Text style={styles.sendButtonText}>
             {isLoading ? '...' : 'Send'}
@@ -267,6 +341,22 @@ function buildEntitiesSummary(entities: SymptomEntities): string {
   return parts.join('\n');
 }
 
+function formatAssessmentNode(node: AssessmentNodePayload): string {
+  if (node.type === 'question') {
+    return node.prompt ?? node.question ?? node.title ?? 'Next step';
+  }
+
+  if (node.type === 'movement_test') {
+    return node.prompt ?? node.title ?? 'Next step';
+  }
+
+  if (node.type === 'assessment') {
+    return [node.title, node.summary].filter(Boolean).join('\n\n');
+  }
+
+  return node.title ?? 'Next step';
+}
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -294,6 +384,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#111827',
     borderWidth: 1,
     borderColor: '#1F2937',
+  },
+  errorBanner: {
+    marginHorizontal: 16,
+    marginBottom: 8,
+    padding: 10,
+    borderRadius: 8,
+    backgroundColor: '#7F1D1D',
+    color: '#FEE2E2',
   },
   footer: {
     flexDirection: 'row',
