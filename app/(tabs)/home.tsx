@@ -5,13 +5,18 @@ import { StyleSheet, Text, View } from 'react-native';
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { loginMethod } = useAuth();
+  const { loginMethod, user } = useAuth();
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.greeting}>neez</Text>
-        {loginMethod && <Text style={styles.loginMethod}>Signed in with {loginMethod}</Text>}
+        {loginMethod && (
+          <Text style={styles.loginMethod}>
+            Signed in with {loginMethod}
+            {user?.email ? ` · ${user.email}` : ''}
+          </Text>
+        )}
       </View>
 
       <Text style={styles.copy}>
