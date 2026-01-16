@@ -1,15 +1,44 @@
 import { Button } from '../components/ui/button';
 import { useAuth } from '../src/contexts/AuthContext';
 import { useRouter } from 'expo-router';
-import { SafeAreaView, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { SafeAreaView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 export default function LoginModal() {
   const router = useRouter();
-  const { login } = useAuth();
+  const {
+    loginWithEmail,
+    loginWithGoogle,
+    isAuthenticated,
+    isLoading,
+    authError,
+    clearError,
+  } = useAuth();
+  const [email, setEmail] = useState('');
+  const [emailSent, setEmailSent] = useState(false);
 
-  const handleLogin = (provider: 'google' | 'email') => {
-    login(provider);
-    router.replace('/(tabs)/index');
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.replace('/(tabs)/index');
+    }
+  }, [isAuthenticated, router]);
+
+  const handleGoogleLogin = async () => {
+    const success = await loginWithGoogle();
+    if (!success) {
+      setEmailSent(false);
+    }
+  };
+
+  const handleEmailLogin = async () => {
+    clearError();
+    setEmailSent(false);
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail) {
+      return;
+    }
+    const success = await loginWithEmail(trimmedEmail);
+    setEmailSent(success);
   };
 
   return (
@@ -20,26 +49,50 @@ export default function LoginModal() {
           Choose how you want to continue. You can switch methods anytime.
         </Text>
 
+        <View style={styles.form}>
+          <Text style={styles.label}>Email address</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="you@example.com"
+            autoCapitalize="none"
+            keyboardType="email-address"
+            value={email}
+            onChangeText={(text) => {
+              setEmail(text);
+              if (authError) {
+                clearError();
+              }
+            }}
+            editable={!isLoading}
+          />
+          {emailSent && (
+            <Text style={styles.helperText}>Check your email for the sign-in link.</Text>
+          )}
+          {authError && <Text style={styles.errorText}>{authError}</Text>}
+        </View>
+
         <View style={styles.buttons}>
           <Button
             title="Continue with Google"
             size="lg"
             style={styles.button}
-            onPress={() => handleLogin('google')}
+            onPress={handleGoogleLogin}
+            loading={isLoading}
           />
           <Button
             title="Continue with Email"
             size="lg"
             variant="secondary"
             style={styles.button}
-            onPress={() => handleLogin('email')}
+            onPress={handleEmailLogin}
+            loading={isLoading}
+            disabled={!email.trim()}
           />
           <Button
             title="Not now"
             variant="ghost"
             size="lg"
             style={styles.button}
-            //onPress={() => router.back()}
             onPress={() => router.push('/intake-chat')}
           />
         </View>
@@ -69,6 +122,30 @@ const styles = StyleSheet.create({
     color: '#4B5563',
     fontSize: 15,
     lineHeight: 20,
+  },
+  form: {
+    gap: 8,
+    marginTop: 4,
+  },
+  label: {
+    fontSize: 13,
+    color: '#6B7280',
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 15,
+  },
+  helperText: {
+    fontSize: 13,
+    color: '#4B5563',
+  },
+  errorText: {
+    fontSize: 13,
+    color: '#DC2626',
   },
   buttons: {
     gap: 10,
