@@ -3,9 +3,9 @@ import 'react-native-url-polyfill/auto';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
-const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '';
+const supabaseKey = process.env.EXPO_PUBLIC_SUPABASE_KEY ?? '';
 
-if (!supabaseUrl || !supabaseAnonKey) {
+if (!supabaseUrl || !supabaseKey) {
   console.warn('Missing Supabase environment variables.');
 }
 
@@ -62,6 +62,6 @@ if (storage) {
   authConfig.autoRefreshToken = false;
 }
 
-export const supabase: SupabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
+export const supabase: SupabaseClient = createClient(supabaseUrl, supabaseKey, {
   auth: authConfig,
 });
