@@ -10,7 +10,7 @@ export default function Welcome() {
   const { isAuthenticated } = useAuth();
 
   // Create the player and configure it once
-  const player = useVideoPlayer(require('../../assets/videos/hiking.mp4'), (player) => {
+  const player = useVideoPlayer("https://kneez.s3.us-west-2.amazonaws.com/welcome.mp4", (player) => {
     player.loop = true;   // isLooping
     player.muted = true;  // isMuted
     player.play();        // shouldPlay
