@@ -1,4 +1,4 @@
-import { useAuth } from '@/src/contexts/AuthContext';
+import { useAuth } from '../../src/contexts/AuthContext';
 import { useRouter } from 'expo-router';
 import { useEffect } from 'react';
 import { SafeAreaView, StyleSheet, Text, View } from 'react-native';
