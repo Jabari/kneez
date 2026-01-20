@@ -3,6 +3,7 @@ import {
   FlatList,
   KeyboardAvoidingView,
   Platform,
+  Pressable,
   StyleSheet,
   Text,
   TextInput,
@@ -10,7 +11,7 @@ import {
   View,
 } from 'react-native';
 import Markdown from 'react-native-markdown-display';
-
+import { useRouter } from 'expo-router';
 import { Button } from "../../components/ui/button"
 import {
   Card,
@@ -39,6 +40,7 @@ type ChatMessage = {
 };
 
 export default function IntakeChatScreen() {
+  const router = useRouter();
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: 'm1',
@@ -190,6 +192,13 @@ Note: Say something like "my left knee hurt when I squat" to see how I can help.
       behavior={Platform.select({ ios: 'padding', android: undefined })}
       keyboardVerticalOffset={80}
     >
+      <View style={styles.header}>
+        <Text>neez</Text>
+        <Pressable onPress={() => router.back()} hitSlop={10}>
+          <Text style={{ fontSize:28 }}>{'<'}</Text>
+        </Pressable>
+        {/* <Button title="back" onPress={() => router.back()} />; */}
+      </View>
       <FlatList
         style={styles.messagesList}
         data={messages}
@@ -271,6 +280,18 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#05070b',
+  },
+  header: {
+    backgroundColor: '#fff',
+    gap: 6,
+    color: '#000',
+    fontSize: 20,
+    display: 'flex',
+    alignItems: 'stretch',
+    height: 64,
+    padding: 20,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
   messagesList: {
     flex: 1,
