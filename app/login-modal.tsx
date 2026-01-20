@@ -19,7 +19,7 @@ export default function LoginModal() {
 
   useEffect(() => {
     if (isAuthenticated) {
-      router.replace('/(tabs)/index');
+      router.replace('/(tabs)/home');
     }
   }, [isAuthenticated, router]);
 
@@ -93,7 +93,7 @@ export default function LoginModal() {
             variant="ghost"
             size="lg"
             style={styles.button}
-            onPress={() => router.push('/intake-chat')}
+            onPress={() => router.push('/(tabs)/home')}
           />
         </View>
       </View>
