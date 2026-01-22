@@ -5,12 +5,10 @@ import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
-import { SafeAreaView } from 'react-native';
+import { View, Platform, SafeAreaView, StyleSheet } from 'react-native';
 import 'react-native-reanimated';
 
-export {
-  ErrorBoundary
-} from 'expo-router';
+export { ErrorBoundary } from 'expo-router';
 
 export const unstable_settings = {
   initialRouteName: 'index',
@@ -29,14 +27,10 @@ export default function RootLayout() {
   }, [error]);
 
   useEffect(() => {
-    if (loaded) {
-      SplashScreen.hideAsync();
-    }
+    if (loaded) SplashScreen.hideAsync();
   }, [loaded]);
 
-  if (!loaded) {
-    return null;
-  }
+  if (!loaded) return null;
 
   return (
     <AuthProvider>
@@ -47,17 +41,47 @@ export default function RootLayout() {
 
 function RootLayoutNav() {
   return (
-    <SafeAreaView style={{ flex: 1 }}>
-      <Stack screenOptions={{ headerShown: false }} initialRouteName="index">
-        <Stack.Screen name="index" options={{ headerShown: false }} />
-        <Stack.Screen name="(public)" options={{ headerShown: false }} />
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="intake-chat" options={{ headerShown: false }} />
-        <Stack.Screen
-          name="login-modal"
-          options={{ presentation: 'modal', headerShown: false }}
-        />
-      </Stack>
-      </SafeAreaView>
+    <View style={[styles.root, Platform.OS === 'web' && styles.webFrame]}>
+      {/* Keep SafeAreaView for native. On web we typically skip it. */}
+      {Platform.OS === 'web' ? (
+        <Stack screenOptions={{ headerShown: false }} initialRouteName="index">
+          <Stack.Screen name="index" options={{ headerShown: false }} />
+          <Stack.Screen name="(public)" options={{ headerShown: false }} />
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="intake-chat" options={{ headerShown: false }} />
+          <Stack.Screen
+            name="login-modal"
+            options={{ presentation: 'modal', headerShown: false }}
+          />
+        </Stack>
+      ) : (
+        <SafeAreaView style={styles.root}>
+          <Stack screenOptions={{ headerShown: false }} initialRouteName="index">
+            <Stack.Screen name="index" options={{ headerShown: false }} />
+            <Stack.Screen name="(public)" options={{ headerShown: false }} />
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="intake-chat" options={{ headerShown: false }} />
+            <Stack.Screen
+              name="login-modal"
+              options={{ presentation: 'modal', headerShown: false }}
+            />
+          </Stack>
+        </SafeAreaView>
+      )}
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+  },
+
+  // Web-only "mobile frame"
+  webFrame: {
+    width: '100%',
+    maxWidth: 430,
+    alignSelf: 'center',      // centers the 430px frame
+    backgroundColor: '#fff',
+  },
+});
