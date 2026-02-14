@@ -10,7 +10,7 @@ export default function Welcome() {
   const { isAuthenticated } = useAuth();
 
   // Create the player and configure it once
-  const player = useVideoPlayer("https://kneez.s3.us-west-2.amazonaws.com/welcome.mp4", (player) => {
+  const player = useVideoPlayer("https://kneez.s3.us-west-2.amazonaws.com/welcome1.mp4", (player) => {
     player.loop = true;   // isLooping
     player.muted = true;  // isMuted
     player.play();        // shouldPlay
@@ -36,7 +36,7 @@ export default function Welcome() {
 
       {/* Overlay content */}
       <View style={styles.content}>
-        <Text style={styles.title}>Kneez</Text>
+        <Text style={styles.title}>neez</Text>
         <Text style={styles.subtitle}>
           An AI-powered app for anyone with knee pain.
         </Text>
@@ -60,11 +60,13 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+    fontFamily: 'SpaceGrotesk_400Regular',
     paddingHorizontal: 24,
     paddingTop: 20,
     backgroundColor: '#fff',
   },
   title: {
+    fontFamily: 'SpaceGrotesk_700Bold',
     fontSize: 28,
     lineHeight: 34,
     fontWeight: Platform.select({ ios: '700', android: '700', default: '700' }),
