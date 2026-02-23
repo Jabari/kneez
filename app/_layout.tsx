@@ -7,6 +7,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import { View, Platform, SafeAreaView, StyleSheet } from 'react-native';
 import 'react-native-reanimated';
+import '../global.css';
 
 export { ErrorBoundary } from 'expo-router';
 
